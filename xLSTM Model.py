@@ -104,6 +104,50 @@ class xLSTMPyTorch(nn.Module):
 
         return torch.cat(outputs, dim=1)  # [batch, seq_len, vocab_size]
 
+# Influence Function
+def influence_function(loss, model, output, target):
+    batch_size, seq_len, vocab_size = output.shape
+    device = output.device
+
+    # Compute F
+    criterion = torch.nn.CrossEntropyLoss()
+    F = criterion(output.reshape(-1, vocab_size), target.reshape(-1))
+
+    output_flat = output.reshape(-1, vocab_size)
+    target_flat = target.reshape(-1)
+
+    second_term = 0.0
+    for idx in range(output_flat.size(0)): 
+        y_k = torch.zeros_like(output_flat[idx])
+        y_k[target_flat[idx]] = 1.0 
+
+        f_theta_k = output_flat[idx] 
+
+        diff = y_k - f_theta_k
+
+        for k in range(vocab_size):
+            grad_outputs = torch.zeros_like(output_flat)
+            grad_outputs[idx, k] = 1.0
+
+            grad_f_theta_k = torch.autograd.grad(
+                outputs=output_flat,
+                inputs=list(model.parameters()),
+                grad_outputs=grad_outputs,
+                create_graph=True,
+                retain_graph=True,
+                allow_unused=True,
+            )
+
+            if any(g is None for g in grad_f_theta_k):
+                continue
+
+            grad_norm = sum((g**2).sum() for g in grad_f_theta_k if g is not None)
+            second_term += diff[k] * grad_norm
+
+    T = seq_len * batch_size
+    H = F - second_term / T
+    return H
+
 def benchmark_pytorch_with_loader(train_loader, vocab_size, embed_size, hidden_size, epochs=10, lr=0.01):
     import time
     model = xLSTMPyTorch(vocab_size, embed_size, hidden_size, use_layernorm=True)
@@ -115,6 +159,7 @@ def benchmark_pytorch_with_loader(train_loader, vocab_size, embed_size, hidden_s
     start_time = time.time()
     for epoch in range(epochs):
         total_loss = 0
+        total_influence = 0
         for x_batch, y_batch in train_loader:
             x_batch, y_batch = x_batch.to(device), y_batch.to(device)
             output = model(x_batch)
@@ -122,10 +167,17 @@ def benchmark_pytorch_with_loader(train_loader, vocab_size, embed_size, hidden_s
             optimizer.zero_grad()
             loss.backward(create_graph=True)  # Enables IF/FIM
             optimizer.step()
+
+            # Calculate influence
+            influence = influence_function(loss, model, output, y_batch)
+            total_influence += influence.item()
+
             total_loss += loss.item()
 
         avg_loss = total_loss / len(train_loader)
-        print(f"Epoch {epoch+1} | Avg Loss: {avg_loss:.4f}")
+        avg_influence = total_influence / len(train_loader)
+
+        print(f"Epoch {epoch+1} | Avg Loss: {avg_loss:.4f} | Avg Influence: {avg_influence:.4f}")
 
     return model, time.time() - start_time
 
