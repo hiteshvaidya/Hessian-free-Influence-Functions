@@ -151,11 +151,11 @@ def benchmark_pytorch_with_loader(train_loader, vocab_size, embed_size, hidden_s
             }
             filename = f"best_xlstm_embed{embed_size}_hidden{hidden_size}_lr{lr}.pth"
             torch.save(best_model_state, filename)
-            print(f"✅ Saved best model so far to: {filename}")
+            print(f"## Saved best model so far to: {filename}")
 
     training_time = time.time() - start_time
 
-    print("\n📌 Best Model Performance in This Run")
+    print("\n## Best Model Performance in This Run")
     print(f"Epoch: {best_metrics['epoch']}")
     print(f"Accuracy: {best_metrics['accuracy']:.4f}")
     print(f"Perplexity: {best_metrics['perplexity']:.2f}")
@@ -197,7 +197,7 @@ overall_best_accuracy = 0.0
 overall_best_config = {}
 overall_best_model_name = ""
 
-print("\n🚀 Starting Grid Search...\n")
+print("\n## Starting Grid Search...\n")
 for embed in embed_sizes:
     for hidden in hidden_sizes:
         for lr in learning_rates:
@@ -215,15 +215,15 @@ for embed in embed_sizes:
                 overall_best_config = best_metrics
                 overall_best_model_name = f"best_xlstm_embed{embed}_hidden{hidden}_lr{lr}.pth"
 
-print("\n🏆 Best Overall Configuration:")
+print("\n## Best Overall Configuration:")
 print(f"Model file: {overall_best_model_name}")
 print(f"Epoch: {overall_best_config['epoch']}")
 print(f"Accuracy: {overall_best_config['accuracy']:.4f}")
 print(f"Perplexity: {overall_best_config['perplexity']:.2f}")
 print(f"Params: embed_size={overall_best_config['embed_size']}, hidden_size={overall_best_config['hidden_size']}, lr={overall_best_config['learning_rate']}")
 
-# 🔁 Continue training the best overall model for 50 more epochs
-print("\n🔁 Continuing training of best model for 50 more epochs...")
+# Continue training the best overall model for 50 more epochs
+print("\n## Continuing training of best model for 50 more epochs...")
 
 # Reload best model
 best_model = xLSTMPyTorch(
@@ -257,8 +257,8 @@ for epoch in range(1, 51):
 
     avg_loss = total_loss / len(train_loader)
     acc, ppl = evaluate_during_training(best_model, train_loader, vocab_size)
-    print(f"📈 Epoch {epoch} | Loss: {avg_loss:.4f} | Accuracy: {acc:.4f} | Perplexity: {ppl:.2f}")
+    print(f"## Epoch {epoch} | Loss: {avg_loss:.4f} | Accuracy: {acc:.4f} | Perplexity: {ppl:.2f}")
 
-# 💾 Save the final model
+# Save the final model
 torch.save(best_model.state_dict(), "final_continued_model.pth")
-print("✅ Final model saved as: final_continued_model.pth")
+print("## Final model saved as: final_continued_model.pth")
