@@ -20,6 +20,12 @@ python -m ipykernel install --user --name=if --display-name="Python-if"
 
 open the jupyter notebooks and ensure that you are using the `if` conda environment created earlier in the form of python kernel.
 
+### Code dictionary
+- [lstm.py](./lstm.py) - training a simple lstm with sequence length limit = 30
+    - [best_model.pth](./best_model.pth) - state dictionary of the above trained lstm after 25 epochs. Perplexity in range 5-10
+- [test_lstm.py](./test_lstm.py) - testing the above trained model to generate output based on a random seed.
+- [fisher_if.py](./fisher_if.ipynb) - influence function with fisher information matrix and the grid search code
+
 ## Datasets
 - [penn treebank](https://catalog.ldc.upenn.edu/docs/LDC95T7/cl93.html) - [paperswithcode](https://paperswithcode.com/dataset/penn-treebank)
 - [text-8](https://www.kaggle.com/datasets/gupta24789/text8-word-embedding)
